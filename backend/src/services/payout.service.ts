@@ -9,6 +9,7 @@ import { config } from '../utils/config';
 import { ErrorCode, type PayoutReason } from '../utils/constants';
 import { ForbiddenError, NotFoundError } from '../utils/exceptions';
 import type { AuthUser } from '../utils/permissions';
+import { CacheKeys, cacheService } from './cache.service';
 import { campaignService } from './campaign.service';
 import { allocateRefill, amountOwedFor, payoutChange } from './payout.calculator';
 import { detectSpike } from './spike.detector';
@@ -78,12 +79,13 @@ export async function runPayout(
   submissionId: string,
   apply: (ctx: PayoutContext) => Promise<number> | number,
 ): Promise<PayoutResultResponse> {
-  const { result } = await withTransaction(async (session) => {
+  const { result, liveStatusChanged } = await withTransaction(async (session) => {
     const submission = await submissionRepository.findById(submissionId, session);
     if (!submission) throw new NotFoundError(ErrorCode.SUBMISSION_NOT_FOUND, 'Submission not found');
     const campaign = await campaignRepository.findById(submission.campaign, session);
     if (!campaign) throw new NotFoundError(ErrorCode.CAMPAIGN_NOT_FOUND, 'Campaign not found');
 
+    const wasLive = campaign.spent < campaign.budget;
     const ctx: PayoutContext = { session, submission, campaign, ledger: new PayoutLedger(campaign) };
     const change = await apply(ctx);
     await submission.save({ session });
@@ -106,6 +108,7 @@ export async function runPayout(
 
     const isLive = campaign.spent < campaign.budget;
     return {
+      liveStatusChanged: wasLive !== isLive,
       result: {
         submission: toSubmissionResponse(submission),
         payoutChange: change,
@@ -114,6 +117,8 @@ export async function runPayout(
     };
   });
 
+  // Only after the commit: a campaign that just ran out (or reopened) must leave (or rejoin) the cached list.
+  if (liveStatusChanged) await cacheService.invalidate(CacheKeys.LIVE_CAMPAIGNS);
   return result;
 }
 

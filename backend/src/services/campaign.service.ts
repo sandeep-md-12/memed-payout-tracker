@@ -4,6 +4,10 @@ import { campaignRepository } from '../repositories/campaign.repository';
 import type { CampaignResponse, CreateCampaignInput } from '../schemas/campaign.schema';
 import { ErrorCode } from '../utils/constants';
 import { ForbiddenError, NotFoundError } from '../utils/exceptions';
+import { CacheKeys, cacheService } from './cache.service';
+
+/** How stale the cached live list may get. Payouts always re-check the real budget, so this is display-only. */
+const LIVE_LIST_TTL_SECONDS = 30;
 
 type CampaignFields = Pick<Campaign, 'name' | 'platform' | 'budget' | 'spent' | 'milestones' | 'createdAt'> & {
   _id: Types.ObjectId;
@@ -28,6 +32,7 @@ export function toCampaignResponse(campaign: CampaignFields, brandName?: string)
 export const campaignService = {
   async create(brandId: string, input: CreateCampaignInput): Promise<CampaignResponse> {
     const campaign = await campaignRepository.create({ brand: new Types.ObjectId(brandId), ...input });
+    await cacheService.invalidate(CacheKeys.LIVE_CAMPAIGNS);
     return toCampaignResponse(campaign);
   },
 
@@ -36,9 +41,12 @@ export const campaignService = {
     return campaigns.map((campaign) => toCampaignResponse(campaign));
   },
 
-  async listLive(): Promise<CampaignResponse[]> {
-    const campaigns = await campaignRepository.findLive();
-    return campaigns.map((campaign) => toCampaignResponse(campaign, campaign.brand.name));
+  /** Cached in Redis when available; cleared when a campaign is created, runs out, or reopens. */
+  listLive(): Promise<CampaignResponse[]> {
+    return cacheService.getOrLoad(CacheKeys.LIVE_CAMPAIGNS, LIVE_LIST_TTL_SECONDS, async () => {
+      const campaigns = await campaignRepository.findLive();
+      return campaigns.map((campaign) => toCampaignResponse(campaign, campaign.brand.name));
+    });
   },
 
   /** Loads a Campaign and checks it belongs to the Brand asking for it. */

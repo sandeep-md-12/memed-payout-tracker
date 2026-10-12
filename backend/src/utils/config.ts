@@ -19,6 +19,8 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('7d'),
   // Comma-separated list of allowed frontend origins, or * for any.
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  // Optional: without it the live-campaign list is simply not cached.
+  REDIS_URL: z.string().optional(),
   // A Spike = at least SPIKE_MIN_GAIN new views, arriving faster than SPIKE_MAX_VIEWS_PER_HOUR.
   SPIKE_MIN_GAIN: z.coerce.number().int().positive().default(5_000),
   SPIKE_MAX_VIEWS_PER_HOUR: z.coerce.number().int().positive().default(50_000),
