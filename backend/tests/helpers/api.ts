@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { createApp } from '../../src/app';
+import { SubmissionModel } from '../../src/models';
 import type { Role } from '../../src/utils/constants';
 
 export const app = createApp();
@@ -50,4 +51,25 @@ export async function submitPost(creator: TestUser, campaignId: string, postUrl?
     .send({ postUrl: postUrl ?? `https://www.instagram.com/reel/post${++postCounter}x${Date.now()}/` })
     .expect(201);
   return res.body.data as { id: string };
+}
+
+/** Pretends the previous View Count report was `hours` ago, so the next report isn't a Spike. */
+export async function backdateLastReport(submissionId: string, hours = 24): Promise<void> {
+  await SubmissionModel.updateOne(
+    { _id: submissionId },
+    { viewsUpdatedAt: new Date(Date.now() - hours * 3_600_000) },
+  );
+}
+
+/**
+ * Sends a View Count update the way the platform would. By default the previous report is moved
+ * a day into the past so the update grows at a normal pace; pass `{ sudden: true }` to test Spikes.
+ */
+export async function reportViews(
+  submissionId: string,
+  views: number,
+  { sudden = false, expectStatus = 200 } = {},
+): Promise<request.Response> {
+  if (!sudden) await backdateLastReport(submissionId);
+  return request(app).patch(`/api/submissions/${submissionId}/views`).send({ views }).expect(expectStatus);
 }

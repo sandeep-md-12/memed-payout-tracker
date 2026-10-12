@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { campaignController } from '../controllers/campaign.controller';
+import { payoutController } from '../controllers/payout.controller';
 import { submissionController } from '../controllers/submission.controller';
 import { createCampaignSchema } from '../schemas/campaign.schema';
 import { idParamsSchema } from '../schemas/common.schema';
@@ -20,6 +21,7 @@ campaignRouter.get(
   validateParams(idParamsSchema),
   submissionController.listForCampaign,
 );
+campaignRouter.get('/:id/payouts', requireRole('brand'), validateParams(idParamsSchema), payoutController.historyForCampaign);
 
 // Creator
 campaignRouter.get('/', requireRole('creator'), campaignController.listLive);

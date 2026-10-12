@@ -29,6 +29,23 @@ export const submissionRepository = {
     return SubmissionModel.findById(id).session(session ?? null).exec();
   },
 
+  /** Active Submissions owed more than they were paid, oldest first (the order Shortfalls are refilled in). */
+  findWithShortfall(
+    campaignId: Types.ObjectId,
+    session: ClientSession,
+    excludeId: Types.ObjectId,
+  ): Promise<SubmissionDocument[]> {
+    return SubmissionModel.find({
+      campaign: campaignId,
+      _id: { $ne: excludeId },
+      status: 'active',
+      $expr: { $gt: ['$amountOwed', '$paid'] },
+    })
+      .sort({ createdAt: 1, _id: 1 })
+      .session(session)
+      .exec();
+  },
+
   existsByPostUrl(postUrl: string): Promise<boolean> {
     return SubmissionModel.exists({ postUrl }).then(Boolean);
   },

@@ -14,7 +14,7 @@ export interface Submission {
   /** Canonical post link (see utils/url.ts); unique across all Campaigns. */
   postUrl: string;
   views: number;
-  /** When `views` last changed; the baseline for Spike detection. Starts at submission time. */
+  /** When the View Count was last reported; the baseline for Spike detection. Starts at submission time. */
   viewsUpdatedAt: Date;
   /** Amount of the highest Milestone the current View Count has reached. */
   amountOwed: number;

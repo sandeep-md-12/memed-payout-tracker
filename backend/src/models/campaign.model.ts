@@ -30,7 +30,19 @@ const campaignSchema = new Schema<Campaign>(
     name: { type: String, required: true, trim: true },
     platform: { type: String, enum: PLATFORMS, required: true },
     budget: { type: Number, required: true, min: 1 },
-    spent: { type: Number, required: true, default: 0, min: 0 },
+    spent: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+      // Last line of defence: if a bug ever tried to overspend, the save (and its transaction) fails.
+      validate: {
+        validator(this: Campaign, spent: number) {
+          return spent <= this.budget;
+        },
+        message: 'Budget Spent cannot exceed the Budget',
+      },
+    },
     milestones: { type: [milestoneSchema], required: true },
   },
   { timestamps: true },
