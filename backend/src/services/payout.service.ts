@@ -5,11 +5,13 @@ import { campaignRepository } from '../repositories/campaign.repository';
 import { payoutEntryRepository, type NewPayoutEntry } from '../repositories/payoutEntry.repository';
 import { submissionRepository } from '../repositories/submission.repository';
 import type { PayoutEntryResponse, PayoutResultResponse } from '../schemas/payout.schema';
+import { config } from '../utils/config';
 import { ErrorCode, type PayoutReason } from '../utils/constants';
 import { ForbiddenError, NotFoundError } from '../utils/exceptions';
 import type { AuthUser } from '../utils/permissions';
 import { campaignService } from './campaign.service';
 import { allocateRefill, amountOwedFor, payoutChange } from './payout.calculator';
+import { detectSpike } from './spike.detector';
 import { toSubmissionResponse } from './submission.service';
 
 /**
@@ -49,7 +51,7 @@ export interface PayoutContext {
  * Moves the Submission's Payout toward its Amount Owed: pays (capped by Budget Remaining)
  * or claws back. Returns the change.
  */
-export function settle({ submission, campaign, ledger }: PayoutContext): number {
+export function settle({ submission, campaign, ledger }: PayoutContext, afterReview = false): number {
   const change = payoutChange({
     amountOwed: submission.amountOwed,
     paid: submission.paid,
@@ -58,7 +60,8 @@ export function settle({ submission, campaign, ledger }: PayoutContext): number 
   if (change === 0) return 0;
 
   let reason: PayoutReason;
-  if (change < 0) reason = 'clawback';
+  if (afterReview) reason = 'review_approved';
+  else if (change < 0) reason = 'clawback';
   else reason = submission.paid + change < submission.amountOwed ? 'budget_cap' : 'milestone';
 
   ledger.move(submission, change, reason);
@@ -126,13 +129,29 @@ function toPayoutEntryResponse(entry: PayoutEntryDocument): PayoutEntryResponse 
 }
 
 export const payoutService = {
-  /** Records a new View Count from the platform and settles the Payout. */
+  /**
+   * Records a new View Count from the platform and settles the Payout.
+   * - Rejected Submissions: views are stored, money never moves again.
+   * - A Spike flags the Submission; Flagged Submissions store views but move no money until reviewed.
+   */
   updateViews(submissionId: string, views: number, now = new Date()): Promise<PayoutResultResponse> {
     return runPayout(submissionId, (ctx) => {
       const { submission, campaign } = ctx;
+      const previous = { views: submission.views, at: submission.viewsUpdatedAt };
       submission.views = views;
       submission.viewsUpdatedAt = now;
+      if (submission.status === 'rejected') return 0;
+
       submission.amountOwed = amountOwedFor(views, campaign.milestones);
+      if (submission.status === 'active') {
+        const spike = detectSpike(previous, { views, at: now }, config.spikeRule);
+        if (spike) {
+          submission.status = 'flagged';
+          submission.flag = { ...spike, flaggedAt: now };
+        }
+      }
+      if (submission.status === 'flagged') return 0;
+
       return settle(ctx);
     });
   },

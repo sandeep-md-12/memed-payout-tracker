@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { payoutController } from '../controllers/payout.controller';
+import { reviewController } from '../controllers/review.controller';
 import { submissionController } from '../controllers/submission.controller';
 import { idParamsSchema } from '../schemas/common.schema';
 import { updateViewsSchema } from '../schemas/payout.schema';
@@ -21,3 +22,18 @@ submissionRouter.get('/mine', requireAuth, requireRole('creator'), submissionCon
 
 // Creator who owns the Submission, or Brand who owns its Campaign (checked in the service).
 submissionRouter.get('/:id/payouts', requireAuth, validateParams(idParamsSchema), payoutController.historyForSubmission);
+
+submissionRouter.post(
+  '/:id/approve',
+  requireAuth,
+  requireRole('brand'),
+  validateParams(idParamsSchema),
+  reviewController.approve,
+);
+submissionRouter.post(
+  '/:id/reject',
+  requireAuth,
+  requireRole('brand'),
+  validateParams(idParamsSchema),
+  reviewController.reject,
+);

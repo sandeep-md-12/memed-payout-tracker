@@ -19,6 +19,9 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('7d'),
   // Comma-separated list of allowed frontend origins, or * for any.
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  // A Spike = at least SPIKE_MIN_GAIN new views, arriving faster than SPIKE_MAX_VIEWS_PER_HOUR.
+  SPIKE_MIN_GAIN: z.coerce.number().int().positive().default(5_000),
+  SPIKE_MAX_VIEWS_PER_HOUR: z.coerce.number().int().positive().default(50_000),
 });
 
 const env = envSchema.parse(process.env);
@@ -26,4 +29,5 @@ const env = envSchema.parse(process.env);
 export const config = {
   ...env,
   corsOrigins: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN.split(',').map((o) => o.trim()),
+  spikeRule: { minGain: env.SPIKE_MIN_GAIN, maxViewsPerHour: env.SPIKE_MAX_VIEWS_PER_HOUR },
 } as const;
