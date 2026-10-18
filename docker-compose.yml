@@ -1,0 +1,62 @@
+# Runs the whole app: MongoDB (as a single-node replica set, which payout transactions need),
+# Redis, the API on :4000 and the web app on :3000.
+#
+#   docker compose up --build
+#
+# The values below are for local use only. Set JWT_SECRET in your shell or a .env file to override.
+services:
+  mongo:
+    image: mongo:7
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      # Becomes healthy once the replica set exists: the first run initiates it, later runs just check it.
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] }).ok }"
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      MONGODB_URI: mongodb://mongo:27017/memed?replicaSet=rs0
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-docker-compose-demo-secret-change-me-0123456789}
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the browser bundle, so this is the address your browser uses to reach the API.
+        NEXT_PUBLIC_API_URL: http://localhost:4000/api
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  mongo-data:
