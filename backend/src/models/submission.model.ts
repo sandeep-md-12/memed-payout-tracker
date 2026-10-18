@@ -14,8 +14,11 @@ export interface Submission {
   /** Canonical post link (see utils/url.ts); unique across all Campaigns. */
   postUrl: string;
   views: number;
-  /** When the View Count was last reported; the baseline for Spike detection. Starts at submission time. */
-  viewsUpdatedAt: Date;
+  /**
+   * When the View Count was last reported; the baseline for Spike detection. Null until the first
+   * report, because a first report has nothing earlier to be compared with.
+   */
+  viewsUpdatedAt: Date | null;
   /** Amount of the highest Milestone the current View Count has reached. */
   amountOwed: number;
   /** The Payout: what this Submission has actually been credited. Shortfall = amountOwed - paid. */
@@ -41,7 +44,7 @@ const submissionSchema = new Schema<Submission>(
     creator: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     postUrl: { type: String, required: true, unique: true },
     views: { type: Number, required: true, default: 0, min: 0 },
-    viewsUpdatedAt: { type: Date, required: true, default: () => new Date() },
+    viewsUpdatedAt: { type: Date, default: null },
     amountOwed: { type: Number, required: true, default: 0, min: 0 },
     paid: { type: Number, required: true, default: 0, min: 0 },
     status: { type: String, enum: SUBMISSION_STATUSES, required: true, default: 'active' },

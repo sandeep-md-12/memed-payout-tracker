@@ -63,7 +63,8 @@ export interface Submission {
   shortfall: number;
   status: SubmissionStatus;
   flag: SubmissionFlag | null;
-  viewsUpdatedAt: string;
+  /** Null until the platform reports a View Count for the first time. */
+  viewsUpdatedAt: string | null;
   createdAt: string;
   campaign?: { id: string; name: string; platform: Platform };
   creator?: { id: string; name: string };

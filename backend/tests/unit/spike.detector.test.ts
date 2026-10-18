@@ -31,6 +31,10 @@ describe('detectSpike', () => {
     expect(detectSpike({ views: 0, at: start }, { views: 50_000, at: minutesLater(60) }, rule)).toBeNull();
   });
 
+  it('never flags a first report, which has no earlier report to compare with', () => {
+    expect(detectSpike(null, { views: 5_000_000, at: start }, rule)).toBeNull();
+  });
+
   it('handles two reports with the same timestamp without dividing by zero', () => {
     expect(detectSpike({ views: 0, at: start }, { views: 10_000, at: start }, rule)?.viewsGained).toBe(10_000);
   });

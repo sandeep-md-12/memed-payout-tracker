@@ -8,7 +8,7 @@
  * It goes through the same services as the API, so every rupee has a Payout Entry.
  */
 import { connectMongo, disconnectMongo } from './src/database/mongo';
-import { SubmissionModel, UserModel } from './src/models';
+import { UserModel } from './src/models';
 import { createCampaignSchema } from './src/schemas/campaign.schema';
 import { authService } from './src/services/auth.service';
 import { campaignService } from './src/services/campaign.service';
@@ -27,12 +27,6 @@ export const DEMO_ACCOUNTS = {
 async function signup(account: (typeof DEMO_ACCOUNTS)[keyof typeof DEMO_ACCOUNTS]): Promise<string> {
   const { user } = await authService.signup({ ...account, password: DEMO_PASSWORD });
   return user.id;
-}
-
-/** Reports views as if they had grown over two days, so they don't count as a Spike. */
-async function reportViewsGradually(submissionId: string, views: number): Promise<void> {
-  await SubmissionModel.updateOne({ _id: submissionId }, { viewsUpdatedAt: new Date(Date.now() - 2 * 86_400_000) });
-  await payoutService.updateViews(submissionId, views);
 }
 
 async function seed(): Promise<void> {
@@ -60,11 +54,12 @@ async function seed(): Promise<void> {
     }),
   );
   const paidReel = await submissionService.submit(creatorId, diwali.id, { postUrl: 'https://www.instagram.com/reel/DemoDiwali1/' });
-  await reportViewsGradually(paidReel.id, 62_000); // ₹2,000 paid
+  await payoutService.updateViews(paidReel.id, 62_000); // first report is never a Spike: ₹2,000 paid
   const topReel = await submissionService.submit(otherCreatorId, diwali.id, { postUrl: 'https://www.instagram.com/reel/DemoDiwali2/' });
-  await reportViewsGradually(topReel.id, 130_000); // ₹5,000 paid
+  await payoutService.updateViews(topReel.id, 130_000); // ₹5,000 paid
   const spikyReel = await submissionService.submit(creatorId, diwali.id, { postUrl: 'https://www.instagram.com/reel/DemoDiwali3/' });
-  await payoutService.updateViews(spikyReel.id, 80_000); // seconds after submitting: flagged for review
+  await payoutService.updateViews(spikyReel.id, 3_000); // a quiet first report sets the baseline
+  await payoutService.updateViews(spikyReel.id, 80_000); // +77K a moment later: flagged for review
 
   // Small YouTube campaign whose budget runs out mid-payout.
   const cricket = await campaignService.create(
@@ -80,9 +75,9 @@ async function seed(): Promise<void> {
     }),
   );
   const viralClip = await submissionService.submit(otherCreatorId, cricket.id, { postUrl: 'https://youtu.be/DemoCricket1' });
-  await reportViewsGradually(viralClip.id, 150_000); // ₹2,500 paid
+  await payoutService.updateViews(viralClip.id, 150_000); // ₹2,500 paid
   const lateClip = await submissionService.submit(creatorId, cricket.id, { postUrl: 'https://youtube.com/shorts/DemoCricket2' });
-  await reportViewsGradually(lateClip.id, 30_000); // owed ₹1,000, only ₹500 left: ₹500 short, campaign used up
+  await payoutService.updateViews(lateClip.id, 30_000); // owed ₹1,000, only ₹500 left: ₹500 short, campaign used up
 
   console.log('Demo data created. Log in with the accounts listed in seed.ts / the README.');
 }

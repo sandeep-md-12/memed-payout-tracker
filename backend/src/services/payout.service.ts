@@ -139,10 +139,13 @@ export const payoutService = {
    * - Rejected Submissions: views are stored, money never moves again.
    * - A Spike flags the Submission; Flagged Submissions store views but move no money until reviewed.
    */
-  updateViews(submissionId: string, views: number, now = new Date()): Promise<PayoutResultResponse> {
+  updateViews(submissionId: string, views: number): Promise<PayoutResultResponse> {
     return runPayout(submissionId, (ctx) => {
       const { submission, campaign } = ctx;
-      const previous = { views: submission.views, at: submission.viewsUpdatedAt };
+      // Read the clock inside the transaction, after the previous report was loaded, so a report
+      // that waited behind a concurrent one is never timed as older than it.
+      const now = new Date();
+      const previous = submission.viewsUpdatedAt ? { views: submission.views, at: submission.viewsUpdatedAt } : null;
       submission.views = views;
       submission.viewsUpdatedAt = now;
       if (submission.status === 'rejected') return 0;

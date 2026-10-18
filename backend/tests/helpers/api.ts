@@ -53,7 +53,10 @@ export async function submitPost(creator: TestUser, campaignId: string, postUrl?
   return res.body.data as { id: string };
 }
 
-/** Pretends the previous View Count report was `hours` ago, so the next report isn't a Spike. */
+/**
+ * Pretends the previous View Count report was `hours` ago. A first report is never a Spike, so this
+ * also gives a fresh Submission the earlier report that Spike detection compares against.
+ */
 export async function backdateLastReport(submissionId: string, hours = 24): Promise<void> {
   await SubmissionModel.updateOne(
     { _id: submissionId },
@@ -63,13 +66,14 @@ export async function backdateLastReport(submissionId: string, hours = 24): Prom
 
 /**
  * Sends a View Count update the way the platform would. By default the previous report is moved
- * a day into the past so the update grows at a normal pace; pass `{ sudden: true }` to test Spikes.
+ * a day into the past so the update grows at a normal pace; pass `{ sudden: true }` to make the
+ * previous report "just now" and test Spikes.
  */
 export async function reportViews(
   submissionId: string,
   views: number,
   { sudden = false, expectStatus = 200 } = {},
 ): Promise<request.Response> {
-  if (!sudden) await backdateLastReport(submissionId);
+  await backdateLastReport(submissionId, sudden ? 0 : 24);
   return request(app).patch(`/api/submissions/${submissionId}/views`).send({ views }).expect(expectStatus);
 }

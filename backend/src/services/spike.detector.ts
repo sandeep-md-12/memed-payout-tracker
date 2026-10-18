@@ -21,8 +21,14 @@ const MS_PER_HOUR = 3_600_000;
 // Two reports in the same instant would divide by zero; treat them as one second apart.
 const MIN_HOURS = 1 / 3_600;
 
-/** Compares a new View Count report with the previous one and returns the Spike, if any. */
-export function detectSpike(previous: ViewsReport, current: ViewsReport, rule: SpikeRule): Spike | null {
+/**
+ * Compares a new View Count report with the previous one and returns the Spike, if any.
+ * A first report (no previous one) is never a Spike: there is no pace to measure it against, and
+ * a Post may already have plenty of views when it is submitted.
+ */
+export function detectSpike(previous: ViewsReport | null, current: ViewsReport, rule: SpikeRule): Spike | null {
+  if (!previous) return null;
+
   const viewsGained = current.views - previous.views;
   if (viewsGained < rule.minGain) return null;
 

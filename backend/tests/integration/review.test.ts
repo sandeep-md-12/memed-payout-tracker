@@ -42,6 +42,15 @@ describe('spike flagging', () => {
     expect(res.body.data).toMatchObject({ payoutChange: 0, submission: { status: 'flagged', views: 120_000, paid: 0 } });
   });
 
+  it('pays the first report of a new Submission straight away, however many views it has', async () => {
+    // Sent right after submitting, with no earlier report: nothing to measure a pace against.
+    const res = await request(app).patch(`/api/submissions/${submissionId}/views`).send({ views: 300_000 }).expect(200);
+    expect(res.body.data).toMatchObject({
+      payoutChange: 5_000,
+      submission: { status: 'active', flag: null, paid: 5_000 },
+    });
+  });
+
   it('does not flag growth at a normal pace', async () => {
     const res = await reportViews(submissionId, 60_000);
     expect(res.body.data.submission.status).toBe('active');
