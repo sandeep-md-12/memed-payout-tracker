@@ -18,12 +18,12 @@ export default function MySubmissionsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="My posts & earnings" />
+      <PageHeader title="My submissions & earnings" />
 
       {earnings.data && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat label="Total earnings" value={formatRupees(earnings.data.totalEarnings)} />
-          <Stat label="Posts" value={earnings.data.submissionCount} />
+          <Stat label="Submissions" value={earnings.data.submissionCount} />
           <Stat label="Shortfall" value={formatRupees(earnings.data.totalShortfall)} hint="Earned, but the campaign's budget ran out" />
           <Stat label="Pending review" value={formatRupees(earnings.data.pendingReview)} hint="Paused while a brand reviews a view spike" />
         </div>
@@ -31,9 +31,9 @@ export default function MySubmissionsPage() {
 
       {(submissions.error || earnings.error) && <Alert kind="error">{submissions.error ?? earnings.error}</Alert>}
       {submissions.loading && !submissions.data ? (
-        <LoadingState label="Loading your posts…" />
+        <LoadingState label="Loading your submissions…" />
       ) : submissions.data?.length === 0 ? (
-        <EmptyState title="You haven't submitted any posts yet">
+        <EmptyState title="You haven't made any submissions yet">
           <Link href="/creator" className="font-medium text-indigo-600 hover:underline">
             Browse live campaigns →
           </Link>
@@ -57,6 +57,7 @@ function SubmissionCard({ submission, onUpdated }: { submission: Submission; onU
   async function loadHistory() {
     try {
       setHistory(await submissionApi.payouts(submission.id));
+      setHistoryError(null);
     } catch (err) {
       setHistoryError(errorMessage(err));
     }
@@ -96,7 +97,7 @@ function SubmissionCard({ submission, onUpdated }: { submission: Submission; onU
         </Alert>
       )}
       {submission.status === 'rejected' && (
-        <Alert kind="error">The brand rejected this post after a view spike, so it no longer earns.</Alert>
+        <Alert kind="error">The brand rejected this submission after a view spike, so it no longer earns.</Alert>
       )}
 
       <div className="flex flex-wrap items-end justify-between gap-4">

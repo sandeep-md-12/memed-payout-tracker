@@ -53,7 +53,7 @@ export default function BrandCampaignsPage() {
       {campaigns.loading && !campaigns.data ? (
         <LoadingState label="Loading your campaigns…" />
       ) : campaigns.data?.length === 0 ? (
-        <EmptyState title="No campaigns yet">Create your first campaign to start receiving posts from creators.</EmptyState>
+        <EmptyState title="No campaigns yet">Create your first campaign to start receiving submissions from creators.</EmptyState>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {campaigns.data?.map((campaign) => (
@@ -63,7 +63,7 @@ export default function BrandCampaignsPage() {
                   <h2 className="font-semibold">{campaign.name}</h2>
                   <p className="text-sm text-slate-500">{PLATFORM_LABELS[campaign.platform]}</p>
                 </div>
-                {campaign.isLive ? <Badge tone="green">Live</Badge> : <Badge tone="gray">Budget used up</Badge>}
+                {campaign.isLive ? <Badge tone="green">Live</Badge> : <Badge tone="gray">Exhausted</Badge>}
               </div>
               <BudgetBar spent={campaign.spent} budget={campaign.budget} />
               <MilestoneLadder milestones={campaign.milestones} />
@@ -71,7 +71,7 @@ export default function BrandCampaignsPage() {
                 href={`/brand/campaigns/${campaign.id}`}
                 className="inline-block text-sm font-medium text-indigo-600 hover:underline"
               >
-                View posts, reviews & payouts →
+                View submissions, reviews & payouts →
               </Link>
             </Card>
           ))}

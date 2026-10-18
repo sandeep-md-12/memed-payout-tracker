@@ -18,7 +18,7 @@ const TONE_CLASS: Record<Outcome['tone'], string> = {
 
 function describe(result: PayoutResult): Outcome {
   const { submission, payoutChange } = result;
-  if (submission.status === 'rejected') return { tone: 'info', text: 'Views recorded. This post was rejected, so it earns nothing.' };
+  if (submission.status === 'rejected') return { tone: 'info', text: 'Views recorded. This submission was rejected, so it earns nothing.' };
   if (submission.status === 'flagged') return { tone: 'warning', text: 'Flagged as a spike: payouts paused until the brand reviews it.' };
   if (payoutChange > 0) {
     const short = submission.shortfall > 0 ? ` (budget ran out: ${formatRupees(submission.shortfall)} short)` : '';
@@ -32,7 +32,7 @@ function describe(result: PayoutResult): Outcome {
  * Stands in for Instagram/YouTube reporting a new view count (PATCH /submissions/:id/views).
  * Clearly labelled so nobody mistakes it for a real feature.
  */
-export function SimulateViews({ submission, onUpdated }: { submission: Submission; onUpdated: () => void }) {
+export function SimulateViews({ submission, onUpdated }: { submission: Submission; onUpdated: () => void | Promise<void> }) {
   const [views, setViews] = useState(String(submission.views));
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -43,7 +43,7 @@ export function SimulateViews({ submission, onUpdated }: { submission: Submissio
     try {
       const result = await submissionApi.updateViews(submission.id, Number(views));
       setOutcome(describe(result));
-      onUpdated();
+      await onUpdated();
     } catch (err) {
       setOutcome({ tone: 'error', text: errorMessage(err) });
     } finally {

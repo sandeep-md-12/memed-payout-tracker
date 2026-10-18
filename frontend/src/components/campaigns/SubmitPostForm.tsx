@@ -24,7 +24,7 @@ export function SubmitPostForm({ campaign }: { campaign: Campaign }) {
     try {
       await submissionApi.submit(campaign.id, postUrl);
       setPostUrl('');
-      setResult({ kind: 'success', message: 'Post submitted.' });
+      setResult({ kind: 'success', message: 'Submission created.' });
     } catch (err) {
       setResult({ kind: 'error', message: errorMessage(err) });
     } finally {

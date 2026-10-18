@@ -10,7 +10,7 @@ const LINKS = {
   brand: [{ href: '/brand', label: 'My campaigns' }],
   creator: [
     { href: '/creator', label: 'Live campaigns' },
-    { href: '/creator/submissions', label: 'My posts & earnings' },
+    { href: '/creator/submissions', label: 'My submissions & earnings' },
   ],
 } as const;
 

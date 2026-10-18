@@ -30,7 +30,7 @@ export default function BrandCampaignPage() {
   async function review(submission: Submission, decision: 'approve' | 'reject') {
     if (
       decision === 'reject' &&
-      !window.confirm(`Reject this post? Its ${formatRupees(submission.paid)} payout returns to the budget and it can never earn again.`)
+      !window.confirm(`Reject this submission? Its ${formatRupees(submission.paid)} payout returns to the budget and it can never earn again.`)
     ) {
       return;
     }
@@ -54,9 +54,9 @@ export default function BrandCampaignPage() {
     }
   }
 
-  const postLabel = (submissionId: string) => {
+  const submissionLabel = (submissionId: string) => {
     const submission = submissions.data?.find((s) => s.id === submissionId);
-    return submission ? `${submission.creator?.name ?? 'Creator'} · ${shortUrl(submission.postUrl)}` : 'Post';
+    return submission ? `${submission.creator?.name ?? 'Creator'} · ${shortUrl(submission.postUrl)}` : 'Submission';
   };
 
   if (submissions.error && !submissions.data) {
@@ -78,8 +78,8 @@ export default function BrandCampaignPage() {
       </Link>
       <PageHeader
         title={campaign.name}
-        subtitle={`${PLATFORM_LABELS[campaign.platform]} · ${submissions.data.length} post(s)`}
-        action={campaign.isLive ? <Badge tone="green">Live</Badge> : <Badge tone="gray">Budget used up</Badge>}
+        subtitle={`${PLATFORM_LABELS[campaign.platform]} · ${submissions.data.length} submission(s)`}
+        action={campaign.isLive ? <Badge tone="green">Live</Badge> : <Badge tone="gray">Exhausted</Badge>}
       />
       <Card className="space-y-4">
         <BudgetBar spent={campaign.spent} budget={campaign.budget} />
@@ -122,9 +122,9 @@ export default function BrandCampaignPage() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Posts</h2>
+        <h2 className="text-lg font-semibold">Submissions</h2>
         {submissions.data.length === 0 ? (
-          <EmptyState title="No posts yet">Creators will see this campaign while it has budget left.</EmptyState>
+          <EmptyState title="No submissions yet">Creators will see this campaign while it has budget left.</EmptyState>
         ) : (
           <Card className="overflow-x-auto p-0">
             <table className="w-full text-left text-sm">
@@ -176,7 +176,7 @@ export default function BrandCampaignPage() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Payout history</h2>
         <Card>
-          {payouts.data ? <PayoutHistory entries={payouts.data} postLabel={postLabel} /> : <LoadingState />}
+          {payouts.data ? <PayoutHistory entries={payouts.data} submissionLabel={submissionLabel} /> : <LoadingState />}
         </Card>
       </section>
     </div>

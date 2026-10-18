@@ -72,7 +72,7 @@ export default function SignupPage() {
             <p className="text-xs text-slate-500">The role can&apos;t be changed later.</p>
           </fieldset>
 
-          <Field label={form.role === 'brand' ? 'Brand name' : 'Name or page name'}>
+          <Field label={form.role === 'brand' ? 'Brand name' : 'Creator name'}>
             <TextInput required minLength={2} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Field>
           <Field label="Email">
