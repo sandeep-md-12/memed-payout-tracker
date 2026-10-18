@@ -9,12 +9,8 @@ type IdParams = { id: string };
 
 export const submissionController = {
   /** POST /api/campaigns/:id/submissions */
-  async create(req: Request<IdParams>, res: Response): Promise<void> {
-    const submission = await submissionService.submit(
-      currentUser(req).id,
-      req.params.id,
-      req.body as CreateSubmissionInput,
-    );
+  async create(req: Request<IdParams, unknown, CreateSubmissionInput>, res: Response): Promise<void> {
+    const submission = await submissionService.submit(currentUser(req).id, req.params.id, req.body);
     sendSuccess(res, submission, Messages.SUBMISSION_CREATED, 201);
   },
 

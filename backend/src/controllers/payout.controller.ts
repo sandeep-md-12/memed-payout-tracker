@@ -9,8 +9,8 @@ type IdParams = { id: string };
 
 export const payoutController = {
   /** PATCH /api/submissions/:id/views (simulated platform data, no login) */
-  async updateViews(req: Request<IdParams>, res: Response): Promise<void> {
-    const { views } = req.body as UpdateViewsInput;
+  async updateViews(req: Request<IdParams, unknown, UpdateViewsInput>, res: Response): Promise<void> {
+    const { views } = req.body;
     const result = await payoutService.updateViews(req.params.id, views);
     sendSuccess(res, result, Messages.VIEWS_UPDATED);
   },

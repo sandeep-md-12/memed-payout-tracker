@@ -1,5 +1,6 @@
 export const ROLES = ['brand', 'creator'] as const;
 export type Role = (typeof ROLES)[number];
+export const isRole = (value: unknown): value is Role => ROLES.some((role) => role === value);
 
 export const PLATFORMS = ['instagram', 'youtube'] as const;
 export type Platform = (typeof PLATFORMS)[number];
@@ -27,6 +28,7 @@ export type PayoutReason = (typeof PAYOUT_REASONS)[number];
 export const ErrorCode = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   INVALID_JSON: 'INVALID_JSON',
+  PAYLOAD_TOO_LARGE: 'PAYLOAD_TOO_LARGE',
   UNAUTHORIZED: 'UNAUTHORIZED',
   INVALID_TOKEN: 'INVALID_TOKEN',
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
@@ -53,7 +55,7 @@ export const Messages = {
   HEALTH_OK: 'API is healthy',
   CAMPAIGN_CREATED: 'Campaign created',
   CAMPAIGNS_RETRIEVED: 'Campaigns retrieved',
-  SUBMISSION_CREATED: 'Post submitted',
+  SUBMISSION_CREATED: 'Submission created',
   SUBMISSIONS_RETRIEVED: 'Submissions retrieved',
   EARNINGS_RETRIEVED: 'Earnings retrieved',
   VIEWS_UPDATED: 'Views updated',

@@ -48,6 +48,14 @@ describe('POST /api/auth/signup', () => {
       .expect(400);
     expect(res.body.code).toBe('INVALID_JSON');
   });
+
+  it('answers a request body over the size limit with 413, not a server error', async () => {
+    const res = await request(app)
+      .post('/api/auth/signup')
+      .send({ ...brand, name: 'x'.repeat(200_000) })
+      .expect(413);
+    expect(res.body.code).toBe('PAYLOAD_TOO_LARGE');
+  });
 });
 
 describe('POST /api/auth/login', () => {

@@ -6,13 +6,13 @@ import { currentUser } from '../utils/permissions';
 import { sendSuccess } from '../utils/response';
 
 export const authController = {
-  async signup(req: Request, res: Response): Promise<void> {
-    const result = await authService.signup(req.body as SignupInput);
+  async signup(req: Request<object, unknown, SignupInput>, res: Response): Promise<void> {
+    const result = await authService.signup(req.body);
     sendSuccess(res, result, Messages.SIGNUP_SUCCESS, 201);
   },
 
-  async login(req: Request, res: Response): Promise<void> {
-    const result = await authService.login(req.body as LoginInput);
+  async login(req: Request<object, unknown, LoginInput>, res: Response): Promise<void> {
+    const result = await authService.login(req.body);
     sendSuccess(res, result, Messages.LOGIN_SUCCESS);
   },
 

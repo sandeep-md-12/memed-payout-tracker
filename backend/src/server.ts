@@ -13,9 +13,13 @@ async function main(): Promise<void> {
 
   const shutdown = (signal: string) => {
     console.log(`${signal} received, shutting down`);
-    server.close(async () => {
-      await Promise.all([disconnectMongo(), disconnectRedis()]);
-      process.exit(0);
+    server.close(() => {
+      Promise.all([disconnectMongo(), disconnectRedis()])
+        .then(() => process.exit(0))
+        .catch((err: unknown) => {
+          console.error('Error while shutting down:', err);
+          process.exit(1);
+        });
     });
   };
   process.on('SIGTERM', () => shutdown('SIGTERM'));

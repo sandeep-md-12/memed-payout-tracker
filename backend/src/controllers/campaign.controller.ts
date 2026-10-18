@@ -6,8 +6,8 @@ import { currentUser } from '../utils/permissions';
 import { sendSuccess } from '../utils/response';
 
 export const campaignController = {
-  async create(req: Request, res: Response): Promise<void> {
-    const campaign = await campaignService.create(currentUser(req).id, req.body as CreateCampaignInput);
+  async create(req: Request<Record<string, string>, unknown, CreateCampaignInput>, res: Response): Promise<void> {
+    const campaign = await campaignService.create(currentUser(req).id, req.body);
     sendSuccess(res, campaign, Messages.CAMPAIGN_CREATED, 201);
   },
 

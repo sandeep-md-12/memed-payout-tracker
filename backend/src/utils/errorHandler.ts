@@ -17,6 +17,10 @@ function isJsonParseError(err: unknown): boolean {
   return typeof err === 'object' && err !== null && (err as { type?: unknown }).type === 'entity.parse.failed';
 }
 
+function isPayloadTooLargeError(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && (err as { type?: unknown }).type === 'entity.too.large';
+}
+
 /**
  * The single place errors become HTTP responses. Express 5 forwards rejected promises from
  * async handlers here, so controllers and services just throw.
@@ -33,6 +37,10 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   }
   if (isJsonParseError(err)) {
     sendError(res, 400, ErrorCode.INVALID_JSON, 'Request body is not valid JSON');
+    return;
+  }
+  if (isPayloadTooLargeError(err)) {
+    sendError(res, 413, ErrorCode.PAYLOAD_TOO_LARGE, 'Request body is too large');
     return;
   }
   if (err instanceof mongoose.Error.CastError) {

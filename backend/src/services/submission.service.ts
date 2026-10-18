@@ -38,7 +38,7 @@ export const submissionService = {
     const campaign = await campaignRepository.findById(campaignId);
     if (!campaign) throw new NotFoundError(ErrorCode.CAMPAIGN_NOT_FOUND, 'Campaign not found');
     if (campaign.spent >= campaign.budget) {
-      throw new ConflictError(ErrorCode.CAMPAIGN_NOT_LIVE, 'This campaign has used its whole budget and is not accepting posts');
+      throw new ConflictError(ErrorCode.CAMPAIGN_NOT_LIVE, 'This campaign has spent its whole budget and is not accepting new submissions');
     }
 
     const postUrl = normalizePostUrl(input.postUrl, campaign.platform);

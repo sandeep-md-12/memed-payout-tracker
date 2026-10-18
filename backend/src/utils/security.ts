@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import { config } from './config';
-import { ErrorCode, ROLES, type Role } from './constants';
+import { ErrorCode, isRole, type Role } from './constants';
 import { UnauthorizedError } from './exceptions';
 
 const BCRYPT_ROUNDS = 10;
@@ -33,8 +33,8 @@ export function verifyToken(token: string): TokenPayload {
   } catch {
     throw new UnauthorizedError('Your session is invalid or has expired; please log in again', ErrorCode.INVALID_TOKEN);
   }
-  const role = typeof decoded === 'object' ? decoded.role : undefined;
-  if (typeof decoded !== 'object' || !decoded.sub || !ROLES.includes(role)) {
+  const role: unknown = typeof decoded === 'object' ? decoded.role : undefined;
+  if (typeof decoded !== 'object' || !decoded.sub || !isRole(role)) {
     throw new UnauthorizedError('Your session is invalid; please log in again', ErrorCode.INVALID_TOKEN);
   }
   return { userId: decoded.sub, role };
