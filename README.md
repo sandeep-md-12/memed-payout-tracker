@@ -2,7 +2,7 @@
 
 Brands create Campaigns with a budget and a milestone ladder. Creators submit their Instagram or YouTube posts to a Campaign and earn as the post's views climb the ladder. Total payouts never exceed the Campaign's budget.
 
-- **Live demo:** _add the deployed URL here after deploying (see [Deploying](#deploying))_
+- **Live demo:** https://memed-payout-tracker-iota.vercel.app (web app on Vercel) · API: https://memed-payout-tracker-9k1y.onrender.com/api (Render). The API is on Render's free tier, which sleeps when idle, so the first request after a pause can take about a minute.
 - **Stack:** Node.js + TypeScript + Express 5 + MongoDB (Mongoose) · Next.js + TypeScript · Jest · Redis (optional cache)
 - **Vocabulary:** the terms used in code and UI (Submission, Payout, Clawback, Exhausted Campaign…) are defined in [CONTEXT.md](CONTEXT.md). Design decisions are in [docs/adr](docs/adr).
 
@@ -134,7 +134,7 @@ Unit tests cover the payout calculation, the budget cap, spike detection, ladder
 
 ## Deploying
 
-Free tiers work: **MongoDB Atlas** (already a replica set; use its connection string as `MONGODB_URI`), **Render** for `backend/` (build `npm ci --include=dev && npm run build`, start `npm start`) and **Vercel** for `frontend/`. Set `CORS_ORIGIN` on the API to the Vercel URL and `NEXT_PUBLIC_API_URL` on the frontend to `https://<your-api>/api`, then put the live link at the top of this file.
+The live demo runs entirely on free tiers: **MongoDB Atlas** (already a replica set; its connection string is `MONGODB_URI`), **Render** for `backend/` (root directory `backend`, build `npm ci --include=dev && npm run build`, start `npm start`, health check `/api/health`) and **Vercel** for `frontend/` (root directory `frontend`). `CORS_ORIGIN` on the API is the Vercel URL, and `NEXT_PUBLIC_API_URL` on the frontend is `https://<your-api>/api`, set before the first build because it is baked into the bundle.
 
 ## Scaling to 10,000 creators
 
